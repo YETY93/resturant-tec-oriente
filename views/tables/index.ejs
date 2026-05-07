@@ -1,0 +1,52 @@
+<%- include('../layout', { 
+  title: 'Gestión de Mesas',
+  body: `
+    <div class="page-header">
+      <h2>Gestión de Mesas</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Agregar Nueva Mesa</h3>
+      </div>
+      <div class="card-body">
+        <form action="/tables" method="POST" class="form-inline">
+          <div class="form-group">
+            <label for="number">Número de Mesa:</label>
+            <input type="number" id="number" name="number" min="1" required class="form-control" placeholder="Ej: 1">
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <span class="icon">+</span> Agregar Mesa
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Lista de Mesas Activas</h3>
+      </div>
+      <div class="card-body">
+        ${tables.length > 0 ? `
+          <div class="tables-grid">
+            ${tables.map(table => `
+              <div class="table-card">
+                <div class="table-number">Mesa ${table.number}</div>
+                <div class="table-actions">
+                  <span class="badge badge-success">Activa</span>
+                  <form action="/tables/${table.id}/delete" method="POST" class="form-delete" onsubmit="return confirm('¿Desactivar mesa ${table.number}?')">
+                    <button type="submit" class="btn btn-danger btn-sm">Desactivar</button>
+                  </form>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div class="empty-state">
+            <p>No hay mesas registradas. Agrega la primera mesa arriba.</p>
+          </div>
+        `}
+      </div>
+    </div>
+  `
+}) %>
