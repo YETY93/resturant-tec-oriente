@@ -13,7 +13,7 @@
       <nav class="nav">
         <% if (locals.user) { %>
           <a href="/tables" class="nav-link">Mesas</a>
-          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <a href="/dashboard" class="nav-link">Pedidos</a>
           <a href="/orders" class="nav-link">Historial</a>
           <span class="nav-user">👤 <%= user.username %></span>
           <form action="/logout" method="POST" class="form-logout">
@@ -101,7 +101,7 @@
                   ✓ Pedido completado y pagado
                 </div>
               <% } %>
-              <a href="/dashboard" class="btn btn-secondary btn-block">← Volver al Dashboard</a>
+              <a href="/dashboard" class="btn btn-secondary btn-block">← Volver a Pedidos</a>
             </div>
           </div>
         </div>
