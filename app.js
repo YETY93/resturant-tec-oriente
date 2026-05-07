@@ -150,10 +150,10 @@ app.post('/orders', requireAuth, (req, res) => {
 
 app.get('/orders', requireAuth, (req, res) => {
   const validFilters = ['pending', 'in_process', 'delivered', 'paid', 'all'];
-  let filter = req.query.status || 'pending';
+  let filter = req.query.status || 'all';
   
   if (!validFilters.includes(filter)) {
-    filter = 'pending';
+    filter = 'all';
   }
   
   let orders;
@@ -176,7 +176,7 @@ app.get('/orders', requireAuth, (req, res) => {
     `).all(filter);
   }
   
-  res.render('orders/index', { orders, filter });
+  res.render('orders/index', { orders, filter, user: req.session.userId ? { id: req.session.userId, username: req.session.username } : null });
 });
 
 app.get('/dashboard', requireAuth, (req, res) => {

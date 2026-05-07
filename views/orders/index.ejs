@@ -47,11 +47,11 @@
             <div class="filter-group">
               <label for="filter">Filtrar por estado:</label>
               <select id="filter" class="form-control" onchange="window.location.href='/orders?status=' + this.value">
+                <option value="all" <%= locals.filter === 'all' ? 'selected' : '' %>>Todos</option>
                 <option value="pending" <%= locals.filter === 'pending' ? 'selected' : '' %>>Pendientes</option>
                 <option value="in_process" <%= locals.filter === 'in_process' ? 'selected' : '' %>>En Proceso</option>
                 <option value="delivered" <%= locals.filter === 'delivered' ? 'selected' : '' %>>Entregados</option>
                 <option value="paid" <%= locals.filter === 'paid' ? 'selected' : '' %>>Pagados</option>
-                <option value="all" <%= locals.filter === 'all' ? 'selected' : '' %>>Todos</option>
               </select>
             </div>
           </div>
