@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedido #<%= order.id %> - Restaurante</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1 class="logo">🍽️ Restaurante Tec Oriente</h1>
+      <nav class="nav">
+        <% if (locals.user) { %>
+          <a href="/tables" class="nav-link">Mesas</a>
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <a href="/orders" class="nav-link">Historial</a>
+          <span class="nav-user">👤 <%= user.username %></span>
+          <form action="/logout" method="POST" class="form-logout">
+            <button type="submit" class="btn btn-logout">Salir</button>
+          </form>
+        <% } else { %>
+          <a href="/login" class="nav-link">Ingresar</a>
+          <a href="/register" class="nav-link">Registrarse</a>
+        <% } %>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      <div class="page-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2>Pedido #<%= order.id %></h2>
+            <p class="page-subtitle">🪑 Mesa <%= order.table_number %> | <%= new Date(order.created_at).toLocaleString('es-ES') %></p>
+          </div>
+          <span class="badge badge-<%= order.status %> badge-lg">
+            <% if (order.status === 'pending') { %>⏳ Pendiente<% } %>
+            <% if (order.status === 'in_process') { %>👨‍🍳 En Proceso<% } %>
+            <% if (order.status === 'delivered') { %>✅ Entregado<% } %>
+            <% if (order.status === 'paid') { %>💰 Pagado<% } %>
+          </span>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <!-- Información del Pedido -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Información del Pedido</h3>
+          </div>
+          <div class="card-body">
+            <div class="info-item">
+              <span class="info-label">Camarero:</span>
+              <span class="info-value"><%= order.username %></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Fecha:</span>
+              <span class="info-value"><%= new Date(order.created_at).toLocaleString('es-ES') %></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Estado:</span>
+              <span class="badge badge-<%= order.status %>">
+                <% if (order.status === 'pending') { %>Pendiente<% } %>
+                <% if (order.status === 'in_process') { %>En Proceso<% } %>
+                <% if (order.status === 'delivered') { %>Entregado<% } %>
+                <% if (order.status === 'paid') { %>Pagado<% } %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="card">
+          <div class="card-header">
+            <h3>⚡ Acciones</h3>
+          </div>
+          <div class="card-body">
+            <div class="actions-grid">
+              <% if (order.status === 'pending') { %>
+                <form action="/orders/<%= order.id %>/status" method="POST">
+                  <input type="hidden" name="status" value="in_process">
+                  <button type="submit" class="btn btn-process btn-block">▶ Iniciar Preparación</button>
+                </form>
+              <% } %>
+              <% if (order.status === 'in_process') { %>
+                <form action="/orders/<%= order.id %>/status" method="POST">
+                  <input type="hidden" name="status" value="delivered">
+                  <button type="submit" class="btn btn-deliver btn-block">✓ Marcar Entregado</button>
+                </form>
+              <% } %>
+              <% if (order.status === 'delivered') { %>
+                <form action="/orders/<%= order.id %>/status" method="POST">
+                  <input type="hidden" name="status" value="paid">
+                  <button type="submit" class="btn btn-pay btn-block">$ Marcar Pagado</button>
+                </form>
+              <% } %>
+              <% if (order.status === 'paid') { %>
+                <div class="alert alert-success">
+                  ✓ Pedido completado y pagado
+                </div>
+              <% } %>
+              <a href="/dashboard" class="btn btn-secondary btn-block">← Volver al Dashboard</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items del Pedido -->
+      <div class="card">
+        <div class="card-header">
+          <h3>🛒 Productos del Pedido</h3>
+        </div>
+        <div class="card-body">
+          <% if (items.length > 0) { %>
+            <div class="table-responsive">
+              <table class="data-table items-table">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% items.forEach(function(item) { %>
+                    <tr>
+                      <td><strong><%= item.name %></strong></td>
+                      <td class="text-center"><%= item.quantity %></td>
+                      <td class="price-cell">$ <%= item.price.toFixed(2) %></td>
+                      <td class="price-cell"><strong>$ <%= (item.price * item.quantity).toFixed(2) %></strong></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+                <tfoot>
+                  <tr class="total-row">
+                    <td colspan="3" class="text-right"><strong>TOTAL:</strong></td>
+                    <td class="price-cell"><strong class="total-amount">$ <%= total.toFixed(2) %></strong></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <p>Este pedido no tiene productos registrados.</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2024 Restaurante Tec Oriente</p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

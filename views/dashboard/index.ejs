@@ -13,6 +13,7 @@
       <nav class="nav">
         <% if (locals.user) { %>
           <a href="/tables" class="nav-link">Mesas</a>
+          <a href="/products" class="nav-link">Productos</a>
           <a href="/dashboard" class="nav-link active">Dashboard</a>
           <a href="/orders" class="nav-link">Historial</a>
           <span class="nav-user">👤 <%= user.username %></span>
@@ -41,73 +42,111 @@
         </div>
       <% } %>
 
-      <!-- SECCIÓN SUPERIOR: CREAR PEDIDO -->
       <div class="page-header">
         <h2>Dashboard</h2>
-        <p class="page-subtitle">Crea pedidos y gestiona estados en tiempo real</p>
+        <p class="page-subtitle">Crea pedidos con productos y gestiona estados en tiempo real</p>
       </div>
 
-      <div class="dashboard-grid">
-        <!-- Panel de Creación de Pedido -->
-        <div class="card panel-create">
-          <div class="card-header">
-            <h3>📝 Crear Nuevo Pedido</h3>
-          </div>
-          <div class="card-body">
-            <form action="/orders" method="POST" class="form-create-order">
+      <div class="card panel-create-full">
+        <div class="card-header">
+          <h3>📝 Crear Nuevo Pedido</h3>
+        </div>
+        <div class="card-body">
+          <form action="/orders" method="POST" id="orderForm">
+            <div class="form-row">
               <div class="form-group">
-                <label for="table_id">Seleccionar Mesa:</label>
+                <label for="table_id">Mesa:</label>
                 <select id="table_id" name="table_id" required class="form-control">
-                  <option value="">-- Mesa --</option>
+                  <option value="">-- Seleccionar Mesa --</option>
                   <% tables.forEach(function(table) { %>
                     <option value="<%= table.id %>">Mesa <%= table.number %></option>
                   <% }); %>
                 </select>
               </div>
-              <button type="submit" class="btn btn-primary btn-block">
-                <span class="icon">+</span> Crear Pedido
-              </button>
-            </form>
-            
-            <% if (tables.length === 0) { %>
-              <div class="alert alert-warning" style="margin-top: 1rem;">
-                No hay mesas disponibles. <a href="/tables">Agregar mesas</a>
-              </div>
-            <% } %>
-          </div>
-        </div>
+            </div>
 
-        <!-- Panel de Estadísticas Rápidas -->
-        <div class="card panel-stats">
-          <div class="card-header">
-            <h3>📊 Pedidos Activos</h3>
-          </div>
-          <div class="card-body">
-            <div class="stats-grid">
-              <div class="stat-item stat-pending">
-                <div class="stat-number">
-                  <%= orders.filter(o => o.status === 'pending').length %>
+            <div class="products-section">
+              <h4>Productos del Pedido</h4>
+              <div id="productsList">
+                <!-- Primer producto por defecto -->
+                <div class="product-item" data-index="0">
+                  <div class="product-row">
+                    <div class="form-group">
+                      <label>Producto:</label>
+                      <select name="products[0][product_id]" required class="form-control product-select">
+                        <option value="">-- Seleccionar --</option>
+                        <% products.forEach(function(product) { %>
+                          <option value="<%= product.id %>" data-price="<%= product.price %>">
+                            <%= product.name %> - $ <%= product.price.toFixed(2) %>
+                          </option>
+                        <% }); %>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Cantidad:</label>
+                      <input type="number" name="products[0][quantity]" min="1" value="1" required class="form-control quantity-input">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-remove" onclick="removeProduct(0)" style="display: none;">
+                      ✕
+                    </button>
+                  </div>
                 </div>
-                <div class="stat-label">Pendientes</div>
               </div>
-              <div class="stat-item stat-in_process">
-                <div class="stat-number">
-                  <%= orders.filter(o => o.status === 'in_process').length %>
-                </div>
-                <div class="stat-label">En Proceso</div>
-              </div>
-              <div class="stat-item stat-delivered">
-                <div class="stat-number">
-                  <%= orders.filter(o => o.status === 'delivered').length %>
-                </div>
-                <div class="stat-label">Entregados</div>
+              
+              <button type="button" class="btn btn-secondary" onclick="addProduct()">
+                + Agregar otro producto
+              </button>
+              
+              <div class="total-preview">
+                <strong>Total estimado:</strong>
+                <span id="totalAmount">$ 0.00</span>
               </div>
             </div>
-          </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary btn-lg">
+                ✓ Crear Pedido
+              </button>
+            </div>
+          </form>
+          
+          <% if (tables.length === 0) { %>
+            <div class="alert alert-warning" style="margin-top: 1rem;">
+              No hay mesas disponibles. <a href="/tables">Agregar mesas</a>
+            </div>
+          <% } %>
+          
+          <% if (products.length === 0) { %>
+            <div class="alert alert-warning" style="margin-top: 1rem;">
+              No hay productos disponibles. <a href="/products">Agregar productos</a>
+            </div>
+          <% } %>
         </div>
       </div>
 
-      <!-- SECCIÓN INFERIOR: LISTA DE PEDIDOS ACTIVOS -->
+      <!-- Estadísticas -->
+      <div class="stats-grid-main">
+        <div class="stat-box stat-pending">
+          <div class="stat-number">
+            <%= orders.filter(o => o.status === 'pending').length %>
+          </div>
+          <div class="stat-label">⏳ Pendientes</div>
+        </div>
+        <div class="stat-box stat-in_process">
+          <div class="stat-number">
+            <%= orders.filter(o => o.status === 'in_process').length %>
+          </div>
+          <div class="stat-label">👨‍🍳 En Proceso</div>
+        </div>
+        <div class="stat-box stat-delivered">
+          <div class="stat-number">
+            <%= orders.filter(o => o.status === 'delivered').length %>
+          </div>
+          <div class="stat-label">✅ Entregados</div>
+        </div>
+      </div>
+
+      <!-- Pedidos Activos -->
       <div class="card">
         <div class="card-header">
           <h3>📋 Gestión de Pedidos Activos</h3>
@@ -134,28 +173,31 @@
                     <p><strong>Fecha:</strong> <%= new Date(order.created_at).toLocaleString('es-ES') %></p>
                   </div>
                   
-                  <div class="order-actions">
+                  <div class="order-actions-row">
+                    <a href="/orders/<%= order.id %>" class="btn btn-info btn-sm">
+                      📄 Ver Detalle
+                    </a>
                     <% if (order.status === 'pending') { %>
-                      <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
+                      <form action="/orders/<%= order.id %>/status" method="POST" class="status-form-inline">
                         <input type="hidden" name="status" value="in_process">
-                        <button type="submit" class="btn btn-process btn-block">
-                          ▶ Iniciar Preparación
+                        <button type="submit" class="btn btn-process btn-sm">
+                          ▶ Iniciar
                         </button>
                       </form>
                     <% } %>
                     <% if (order.status === 'in_process') { %>
-                      <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
+                      <form action="/orders/<%= order.id %>/status" method="POST" class="status-form-inline">
                         <input type="hidden" name="status" value="delivered">
-                        <button type="submit" class="btn btn-deliver btn-block">
-                          ✓ Marcar Entregado
+                        <button type="submit" class="btn btn-deliver btn-sm">
+                          ✓ Entregar
                         </button>
                       </form>
                     <% } %>
                     <% if (order.status === 'delivered') { %>
-                      <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
+                      <form action="/orders/<%= order.id %>/status" method="POST" class="status-form-inline">
                         <input type="hidden" name="status" value="paid">
-                        <button type="submit" class="btn btn-pay btn-block">
-                          $ Marcar Pagado
+                        <button type="submit" class="btn btn-pay btn-sm">
+                          $ Pagar
                         </button>
                       </form>
                     <% } %>
@@ -167,7 +209,6 @@
             <div class="empty-state">
               <div class="empty-icon">🎉</div>
               <p>No hay pedidos activos. ¡Todo está listo!</p>
-              <p class="empty-hint">Crea un nuevo pedido arriba para comenzar</p>
             </div>
           <% } %>
         </div>
@@ -180,6 +221,90 @@
       <p>&copy; 2024 Restaurante Tec Oriente</p>
     </div>
   </footer>
+
+  <script>
+    let productCounter = 1;
+    
+    function addProduct() {
+      const productsList = document.getElementById('productsList');
+      const productItem = document.createElement('div');
+      productItem.className = 'product-item';
+      productItem.dataset.index = productCounter;
+      
+      productItem.innerHTML = `
+        <div class="product-row">
+          <div class="form-group">
+            <label>Producto:</label>
+            <select name="products[${productCounter}][product_id]" required class="form-control product-select">
+              <option value="">-- Seleccionar --</option>
+              <% products.forEach(function(product) { %>
+                <option value="<%= product.id %>" data-price="<%= product.price %>">
+                  <%= product.name %> - $ <%= product.price.toFixed(2) %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cantidad:</label>
+            <input type="number" name="products[${productCounter}][quantity]" min="1" value="1" required class="form-control quantity-input">
+          </div>
+          <button type="button" class="btn btn-danger btn-remove" onclick="removeProduct(${productCounter})">
+            ✕
+          </button>
+        </div>
+      `;
+      
+      productsList.appendChild(productItem);
+      productCounter++;
+      updateTotal();
+      
+      // Mostrar botones de eliminar en todos los items
+      document.querySelectorAll('.btn-remove').forEach(btn => btn.style.display = 'inline-flex');
+    }
+    
+    function removeProduct(index) {
+      const item = document.querySelector(`.product-item[data-index="${index}"]`);
+      if (item) {
+        item.remove();
+        updateTotal();
+        
+        // Ocultar botón eliminar si solo queda 1 producto
+        const items = document.querySelectorAll('.product-item');
+        if (items.length === 1) {
+          items[0].querySelector('.btn-remove').style.display = 'none';
+        }
+      }
+    }
+    
+    function updateTotal() {
+      let total = 0;
+      const items = document.querySelectorAll('.product-item');
+      
+      items.forEach(item => {
+        const select = item.querySelector('.product-select');
+        const quantity = item.querySelector('.quantity-input');
+        
+        if (select.value) {
+          const option = select.options[select.selectedIndex];
+          const price = parseFloat(option.dataset.price || 0);
+          const qty = parseInt(quantity.value || 0);
+          total += price * qty;
+        }
+      });
+      
+      document.getElementById('totalAmount').textContent = '$ ' + total.toFixed(2);
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.product-select').forEach(select => {
+        select.addEventListener('change', updateTotal);
+      });
+      document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('change', updateTotal);
+      });
+    });
+  </script>
 
   <script src="/js/main.js"></script>
 </body>

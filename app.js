@@ -140,11 +140,32 @@ app.get('/orders/new', requireAuth, (req, res) => {
 });
 
 app.post('/orders', requireAuth, (req, res) => {
-  const { table_id } = req.body;
+  const { table_id, products } = req.body;
   const userId = req.session.userId;
   
+  if (!table_id) {
+    req.session.errorMessage = 'Debe seleccionar una mesa';
+    return res.redirect('/dashboard');
+  }
+  
+  if (!products || !Array.isArray(products) || products.length === 0) {
+    req.session.errorMessage = 'Debe agregar al menos un producto';
+    return res.redirect('/dashboard');
+  }
+  
   try {
-    db.prepare('INSERT INTO orders (user_id, table_id) VALUES (?, ?)').run(userId, table_id);
+    const insertOrder = db.prepare('INSERT INTO orders (user_id, table_id) VALUES (?, ?)');
+    const insertItem = db.prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
+    
+    const result = insertOrder.run(userId, table_id);
+    const orderId = result.lastInsertRowid;
+    
+    products.forEach(item => {
+      if (item.product_id && item.quantity && item.quantity > 0) {
+        insertItem.run(orderId, item.product_id, parseInt(item.quantity));
+      }
+    });
+    
     req.session.successMessage = 'Pedido creado exitosamente';
     res.redirect('/dashboard');
   } catch (error) {
@@ -201,6 +222,13 @@ app.get('/dashboard', requireAuth, (req, res) => {
     ORDER BY number
   `).all();
   
+  const products = db.prepare(`
+    SELECT id, name, price
+    FROM products
+    WHERE is_active = 1
+    ORDER BY name
+  `).all();
+  
   const success = req.session.successMessage;
   const error = req.session.errorMessage;
   req.session.successMessage = null;
@@ -209,9 +237,42 @@ app.get('/dashboard', requireAuth, (req, res) => {
   res.render('dashboard/index', { 
     orders, 
     tables, 
+    products,
     user: req.session.userId ? { id: req.session.userId, username: req.session.username } : null,
     success,
     error
+  });
+});
+
+app.get('/orders/:id', requireAuth, (req, res) => {
+  const { id } = req.params;
+  
+  const order = db.prepare(`
+    SELECT orders.id, orders.status, orders.created_at, tables.number as table_number, users.username
+    FROM orders
+    JOIN tables ON orders.table_id = tables.id
+    JOIN users ON orders.user_id = users.id
+    WHERE orders.id = ?
+  `).get(id);
+  
+  if (!order) {
+    return res.redirect('/dashboard');
+  }
+  
+  const items = db.prepare(`
+    SELECT order_items.id, order_items.quantity, products.name, products.price
+    FROM order_items
+    JOIN products ON order_items.product_id = products.id
+    WHERE order_items.order_id = ?
+  `).all(id);
+  
+  const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  res.render('orders/detail', { 
+    order, 
+    items, 
+    total,
+    user: req.session.userId ? { id: req.session.userId, username: req.session.username } : null
   });
 });
 
@@ -243,6 +304,35 @@ app.post('/orders/:id/status', requireAuth, (req, res) => {
   
   db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, id);
   res.redirect('/dashboard');
+});
+
+app.get('/products', requireAuth, (req, res) => {
+  const products = db.prepare('SELECT * FROM products WHERE is_active = 1 ORDER BY name').all();
+  res.render('products/index', { products, user: req.session.userId ? { id: req.session.userId, username: req.session.username } : null });
+});
+
+app.post('/products', requireAuth, (req, res) => {
+  const { name, price } = req.body;
+  
+  if (!name || !price || price <= 0) {
+    req.session.errorMessage = 'Nombre y precio válidos son requeridos';
+    return res.redirect('/products');
+  }
+  
+  try {
+    db.prepare('INSERT INTO products (name, price) VALUES (?, ?)').run(name, parseFloat(price));
+    req.session.successMessage = 'Producto agregado exitosamente';
+    res.redirect('/products');
+  } catch (error) {
+    req.session.errorMessage = 'Error al agregar producto';
+    res.redirect('/products');
+  }
+});
+
+app.post('/products/:id/delete', requireAuth, (req, res) => {
+  const { id } = req.params;
+  db.prepare('UPDATE products SET is_active = 0 WHERE id = ?').run(id);
+  res.redirect('/products');
 });
 
 const PORT = process.env.PORT || 3000;
