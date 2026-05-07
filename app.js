@@ -96,9 +96,11 @@ app.get('/tables', requireAuth, (req, res) => {
     SELECT 
       tables.id, 
       tables.number,
-      CASE WHEN orders.id IS NOT NULL THEN 1 ELSE 0 END as has_active_order
+      CASE WHEN EXISTS(
+        SELECT 1 FROM orders 
+        WHERE orders.table_id = tables.id AND orders.status != 'paid'
+      ) THEN 1 ELSE 0 END as has_active_order
     FROM tables
-    LEFT JOIN orders ON tables.id = orders.table_id AND orders.status != 'paid'
     WHERE tables.is_active = 1
     ORDER BY tables.number
   `).all();
@@ -115,9 +117,11 @@ app.post('/tables', requireAuth, (req, res) => {
       SELECT 
         tables.id, 
         tables.number,
-        CASE WHEN orders.id IS NOT NULL THEN 1 ELSE 0 END as has_active_order
+        CASE WHEN EXISTS(
+          SELECT 1 FROM orders 
+          WHERE orders.table_id = tables.id AND orders.status != 'paid'
+        ) THEN 1 ELSE 0 END as has_active_order
       FROM tables
-      LEFT JOIN orders ON tables.id = orders.table_id AND orders.status != 'paid'
       WHERE tables.is_active = 1
       ORDER BY tables.number
     `).all();
