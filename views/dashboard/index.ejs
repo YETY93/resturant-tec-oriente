@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Pedidos Activos</title>
+  <title>Dashboard - Restaurante</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -13,9 +13,8 @@
       <nav class="nav">
         <% if (locals.user) { %>
           <a href="/tables" class="nav-link">Mesas</a>
-          <a href="/dashboard" class="nav-link">Dashboard</a>
-          <a href="/orders/new" class="nav-link">Nuevo Pedido</a>
-          <a href="/orders" class="nav-link">Pedidos</a>
+          <a href="/dashboard" class="nav-link active">Dashboard</a>
+          <a href="/orders" class="nav-link">Historial</a>
           <span class="nav-user">👤 <%= user.username %></span>
           <form action="/logout" method="POST" class="form-logout">
             <button type="submit" class="btn btn-logout">Salir</button>
@@ -36,65 +35,143 @@
         </div>
       <% } %>
       
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div class="alert alert-success">
+          <%= success %>
+        </div>
+      <% } %>
+
+      <!-- SECCIÓN SUPERIOR: CREAR PEDIDO -->
       <div class="page-header">
-        <h2>Dashboard de Pedidos</h2>
-        <p class="page-subtitle">Gestiona el estado de los pedidos activos</p>
+        <h2>Dashboard</h2>
+        <p class="page-subtitle">Crea pedidos y gestiona estados en tiempo real</p>
       </div>
 
-      <% if (orders.length > 0) { %>
-        <div class="orders-dashboard">
-          <% orders.forEach(function(order) { %>
-            <div class="order-card order-<%= order.status %>">
-              <div class="order-header">
-                <div class="order-info">
-                  <span class="order-id">#<%= order.id %></span>
-                  <span class="order-table">Mesa <%= order.table_number %></span>
-                </div>
-                <span class="badge badge-<%= order.status %>">
-                  <% if (order.status === 'pending') { %>Pendiente<% } %>
-                  <% if (order.status === 'in_process') { %>En Proceso<% } %>
-                  <% if (order.status === 'delivered') { %>Entregado<% } %>
-                  <% if (order.status === 'paid') { %>Pagado<% } %>
-                </span>
-              </div>
-              
-              <div class="order-details">
-                <p><strong>Camarero:</strong> <%= order.username %></p>
-                <p><strong>Fecha:</strong> <%= new Date(order.created_at).toLocaleString('es-ES') %></p>
-              </div>
-              
-              <div class="order-actions">
-                <% if (order.status === 'pending') { %>
-                  <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
-                    <input type="hidden" name="status" value="in_process">
-                    <button type="submit" class="btn btn-process btn-block">▶ Iniciar Preparación</button>
-                  </form>
-                <% } %>
-                <% if (order.status === 'in_process') { %>
-                  <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
-                    <input type="hidden" name="status" value="delivered">
-                    <button type="submit" class="btn btn-deliver btn-block">✓ Marcar Entregado</button>
-                  </form>
-                <% } %>
-                <% if (order.status === 'delivered') { %>
-                  <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
-                    <input type="hidden" name="status" value="paid">
-                    <button type="submit" class="btn btn-pay btn-block">$ Marcar Pagado</button>
-                  </form>
-                <% } %>
-              </div>
-            </div>
-          <% }); %>
-        </div>
-      <% } else { %>
-        <div class="card">
+      <div class="dashboard-grid">
+        <!-- Panel de Creación de Pedido -->
+        <div class="card panel-create">
+          <div class="card-header">
+            <h3>📝 Crear Nuevo Pedido</h3>
+          </div>
           <div class="card-body">
-            <div class="empty-state">
-              <p>No hay pedidos activos. <a href="/orders/new">Crear un nuevo pedido</a></p>
+            <form action="/orders" method="POST" class="form-create-order">
+              <div class="form-group">
+                <label for="table_id">Seleccionar Mesa:</label>
+                <select id="table_id" name="table_id" required class="form-control">
+                  <option value="">-- Mesa --</option>
+                  <% tables.forEach(function(table) { %>
+                    <option value="<%= table.id %>">Mesa <%= table.number %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">
+                <span class="icon">+</span> Crear Pedido
+              </button>
+            </form>
+            
+            <% if (tables.length === 0) { %>
+              <div class="alert alert-warning" style="margin-top: 1rem;">
+                No hay mesas disponibles. <a href="/tables">Agregar mesas</a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Panel de Estadísticas Rápidas -->
+        <div class="card panel-stats">
+          <div class="card-header">
+            <h3>📊 Pedidos Activos</h3>
+          </div>
+          <div class="card-body">
+            <div class="stats-grid">
+              <div class="stat-item stat-pending">
+                <div class="stat-number">
+                  <%= orders.filter(o => o.status === 'pending').length %>
+                </div>
+                <div class="stat-label">Pendientes</div>
+              </div>
+              <div class="stat-item stat-in_process">
+                <div class="stat-number">
+                  <%= orders.filter(o => o.status === 'in_process').length %>
+                </div>
+                <div class="stat-label">En Proceso</div>
+              </div>
+              <div class="stat-item stat-delivered">
+                <div class="stat-number">
+                  <%= orders.filter(o => o.status === 'delivered').length %>
+                </div>
+                <div class="stat-label">Entregados</div>
+              </div>
             </div>
           </div>
         </div>
-      <% } %>
+      </div>
+
+      <!-- SECCIÓN INFERIOR: LISTA DE PEDIDOS ACTIVOS -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📋 Gestión de Pedidos Activos</h3>
+        </div>
+        <div class="card-body">
+          <% if (orders.length > 0) { %>
+            <div class="orders-dashboard">
+              <% orders.forEach(function(order) { %>
+                <div class="order-card order-<%= order.status %>">
+                  <div class="order-header">
+                    <div class="order-info">
+                      <span class="order-id">#<%= order.id %></span>
+                      <span class="order-table">🪑 Mesa <%= order.table_number %></span>
+                    </div>
+                    <span class="badge badge-<%= order.status %>">
+                      <% if (order.status === 'pending') { %>⏳ Pendiente<% } %>
+                      <% if (order.status === 'in_process') { %>👨‍🍳 En Proceso<% } %>
+                      <% if (order.status === 'delivered') { %>✅ Entregado<% } %>
+                    </span>
+                  </div>
+                  
+                  <div class="order-details">
+                    <p><strong>Camarero:</strong> <%= order.username %></p>
+                    <p><strong>Fecha:</strong> <%= new Date(order.created_at).toLocaleString('es-ES') %></p>
+                  </div>
+                  
+                  <div class="order-actions">
+                    <% if (order.status === 'pending') { %>
+                      <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
+                        <input type="hidden" name="status" value="in_process">
+                        <button type="submit" class="btn btn-process btn-block">
+                          ▶ Iniciar Preparación
+                        </button>
+                      </form>
+                    <% } %>
+                    <% if (order.status === 'in_process') { %>
+                      <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
+                        <input type="hidden" name="status" value="delivered">
+                        <button type="submit" class="btn btn-deliver btn-block">
+                          ✓ Marcar Entregado
+                        </button>
+                      </form>
+                    <% } %>
+                    <% if (order.status === 'delivered') { %>
+                      <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
+                        <input type="hidden" name="status" value="paid">
+                        <button type="submit" class="btn btn-pay btn-block">
+                          $ Marcar Pagado
+                        </button>
+                      </form>
+                    <% } %>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <div class="empty-icon">🎉</div>
+              <p>No hay pedidos activos. ¡Todo está listo!</p>
+              <p class="empty-hint">Crea un nuevo pedido arriba para comenzar</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
     </div>
   </main>
 

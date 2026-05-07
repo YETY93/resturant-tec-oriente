@@ -136,16 +136,21 @@ app.post('/tables/:id/delete', requireAuth, (req, res) => {
 });
 
 app.get('/orders/new', requireAuth, (req, res) => {
-  const tables = db.prepare('SELECT * FROM tables WHERE is_active = 1').all();
-  res.render('orders/new', { tables });
+  res.redirect('/dashboard');
 });
 
 app.post('/orders', requireAuth, (req, res) => {
   const { table_id } = req.body;
   const userId = req.session.userId;
   
-  db.prepare('INSERT INTO orders (user_id, table_id) VALUES (?, ?)').run(userId, table_id);
-  res.redirect('/orders');
+  try {
+    db.prepare('INSERT INTO orders (user_id, table_id) VALUES (?, ?)').run(userId, table_id);
+    req.session.successMessage = 'Pedido creado exitosamente';
+    res.redirect('/dashboard');
+  } catch (error) {
+    req.session.errorMessage = 'Error al crear el pedido';
+    res.redirect('/dashboard');
+  }
 });
 
 app.get('/orders', requireAuth, (req, res) => {
@@ -189,7 +194,25 @@ app.get('/dashboard', requireAuth, (req, res) => {
     ORDER BY orders.created_at DESC
   `).all();
   
-  res.render('dashboard/index', { orders });
+  const tables = db.prepare(`
+    SELECT id, number
+    FROM tables
+    WHERE is_active = 1
+    ORDER BY number
+  `).all();
+  
+  const success = req.session.successMessage;
+  const error = req.session.errorMessage;
+  req.session.successMessage = null;
+  req.session.errorMessage = null;
+  
+  res.render('dashboard/index', { 
+    orders, 
+    tables, 
+    user: req.session.userId ? { id: req.session.userId, username: req.session.username } : null,
+    success,
+    error
+  });
 });
 
 app.post('/orders/:id/status', requireAuth, (req, res) => {
