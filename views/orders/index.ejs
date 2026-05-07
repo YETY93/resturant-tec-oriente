@@ -1,57 +1,99 @@
-<%- include('../layout', { 
-  title: 'Lista de Pedidos',
-  body: `
-    <div class="page-header">
-      <h2>Pedidos Activos</h2>
-      <a href="/dashboard" class="btn btn-primary" style="margin-top: 0.5rem;">Ir al Dashboard</a>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Pedidos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1 class="logo">🍽️ Restaurante Tec Oriente</h1>
+      <nav class="nav">
+        <% if (locals.user) { %>
+          <a href="/tables" class="nav-link">Mesas</a>
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <a href="/orders/new" class="nav-link">Nuevo Pedido</a>
+          <a href="/orders" class="nav-link">Pedidos</a>
+          <span class="nav-user">👤 <%= user.username %></span>
+          <form action="/logout" method="POST" class="form-logout">
+            <button type="submit" class="btn btn-logout">Salir</button>
+          </form>
+        <% } else { %>
+          <a href="/login" class="nav-link">Ingresar</a>
+          <a href="/register" class="nav-link">Registrarse</a>
+        <% } %>
+      </nav>
     </div>
+  </header>
 
-    <div class="card">
-      <div class="card-header">
-        <h3>Pedidos No Pagados</h3>
+  <main class="main">
+    <div class="container">
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-error">
+          <%= error %>
+        </div>
+      <% } %>
+      
+      <div class="page-header">
+        <h2>Pedidos Activos</h2>
+        <a href="/dashboard" class="btn btn-primary" style="margin-top: 0.5rem;">Ir al Dashboard</a>
       </div>
-      <div class="card-body">
-        ${orders.length > 0 ? `
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Mesa</th>
-                  <th>Usuario</th>
-                  <th>Estado</th>
-                  <th>Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${orders.map(order => `
-                  <tr class="row-${order.status}">
-                    <td><strong>#${order.id}</strong></td>
-                    <td>Mesa ${order.table_number}</td>
-                    <td>${order.username}</td>
-                    <td><span class="badge badge-${order.status}">${getStatusLabel(order.status)}</span></td>
-                    <td>${new Date(order.created_at).toLocaleString('es-ES')}</td>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Pedidos No Pagados</h3>
+        </div>
+        <div class="card-body">
+          <% if (orders.length > 0) { %>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Mesa</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
                   </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        ` : `
-          <div class="empty-state">
-            <p>No hay pedidos activos. <a href="/orders/new">Crear el primer pedido</a></p>
-          </div>
-        `}
+                </thead>
+                <tbody>
+                  <% orders.forEach(function(order) { %>
+                    <tr class="row-<%= order.status %>">
+                      <td><strong>#<%= order.id %></strong></td>
+                      <td>Mesa <%= order.table_number %></td>
+                      <td><%= order.username %></td>
+                      <td>
+                        <span class="badge badge-<%= order.status %>">
+                          <% if (order.status === 'pending') { %>Pendiente<% } %>
+                          <% if (order.status === 'in_process') { %>En Proceso<% } %>
+                          <% if (order.status === 'delivered') { %>Entregado<% } %>
+                          <% if (order.status === 'paid') { %>Pagado<% } %>
+                        </span>
+                      </td>
+                      <td><%= new Date(order.created_at).toLocaleString('es-ES') %></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <p>No hay pedidos activos. <a href="/orders/new">Crear el primer pedido</a></p>
+            </div>
+          <% } %>
+        </div>
       </div>
     </div>
-  `
-}) %>
+  </main>
 
-<%- function getStatusLabel(status) {
-  const labels = {
-    'pending': 'Pendiente',
-    'in_process': 'En Proceso',
-    'delivered': 'Entregado',
-    'paid': 'Pagado'
-  };
-  return labels[status] || status;
-} %>
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2024 Restaurante Tec Oriente</p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
