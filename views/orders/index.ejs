@@ -1,0 +1,46 @@
+<%- include('../layout', { 
+  title: 'Lista de Pedidos',
+  body: `
+    <div class="page-header">
+      <h2>Pedidos</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Todos los Pedidos</h3>
+      </div>
+      <div class="card-body">
+        ${orders.length > 0 ? `
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Mesa</th>
+                  <th>Usuario</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${orders.map(order => `
+                  <tr>
+                    <td><strong>#${order.id}</strong></td>
+                    <td>Mesa ${order.table_number}</td>
+                    <td>${order.username}</td>
+                    <td><span class="badge badge-${order.status}">${order.status}</span></td>
+                    <td>${new Date(order.created_at).toLocaleString('es-ES')}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : `
+          <div class="empty-state">
+            <p>No hay pedidos. <a href="/orders/new">Crear el primer pedido</a></p>
+          </div>
+        `}
+      </div>
+    </div>
+  `
+}) %>

@@ -1,0 +1,31 @@
+<%- include('../layout', { 
+  title: 'Nuevo Pedido',
+  body: `
+    <div class="page-header">
+      <h2>Crear Nuevo Pedido</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Seleccionar Mesa</h3>
+      </div>
+      <div class="card-body">
+        <form action="/orders" method="POST" class="form-order">
+          <div class="form-group">
+            <label for="table_id">Mesa</label>
+            <select id="table_id" name="table_id" required class="form-control">
+              <option value="">-- Selecciona una mesa --</option>
+              ${tables.map(table => `
+                <option value="${table.id}">Mesa ${table.number}</option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-actions">
+            <a href="/tables" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Crear Pedido</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `
+}) %>
