@@ -30,10 +30,18 @@
         ${tables.length > 0 ? `
           <div class="tables-grid">
             ${tables.map(table => `
-              <div class="table-card">
+              <div class="table-card ${table.has_active_order ? 'table-occupied' : 'table-available'}">
+                <div class="table-icon">
+                  <span class="icon-table">🪑</span>
+                </div>
                 <div class="table-number">Mesa ${table.number}</div>
+                <div class="table-status">
+                  ${table.has_active_order ? 
+                    '<span class="badge badge-occupied">Ocupada</span>' : 
+                    '<span class="badge badge-available">Disponible</span>'
+                  }
+                </div>
                 <div class="table-actions">
-                  <span class="badge badge-success">Activa</span>
                   <form action="/tables/${table.id}/delete" method="POST" class="form-delete" onsubmit="return confirm('¿Desactivar mesa ${table.number}?')">
                     <button type="submit" class="btn btn-danger btn-sm">Desactivar</button>
                   </form>

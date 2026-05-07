@@ -229,25 +229,52 @@ body {
   border-radius: var(--radius);
   padding: 1.25rem;
   transition: box-shadow 0.2s, transform 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-.table-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+.table-available {
+  border-left: 4px solid var(--success);
+}
+
+.table-occupied {
+  background-color: #f9fafb;
+  border-left: 4px solid var(--warning);
+  opacity: 0.75;
+}
+
+.table-occupied:hover {
+  opacity: 1;
+}
+
+.table-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.icon-table {
+  display: block;
 }
 
 .table-number {
   font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   color: var(--gray-800);
+}
+
+.table-status {
+  margin-bottom: 1rem;
 }
 
 .table-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: 0.5rem;
+  margin-top: auto;
 }
 
 .badge {
@@ -256,6 +283,16 @@ body {
   font-weight: 600;
   border-radius: 9999px;
   text-transform: uppercase;
+}
+
+.badge-available {
+  background-color: #d1fae5;
+  color: var(--success);
+}
+
+.badge-occupied {
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
 .badge-success {

@@ -92,7 +92,16 @@ app.post('/logout', (req, res) => {
 });
 
 app.get('/tables', requireAuth, (req, res) => {
-  const tables = db.prepare('SELECT * FROM tables WHERE is_active = 1').all();
+  const tables = db.prepare(`
+    SELECT 
+      tables.id, 
+      tables.number,
+      CASE WHEN orders.id IS NOT NULL THEN 1 ELSE 0 END as has_active_order
+    FROM tables
+    LEFT JOIN orders ON tables.id = orders.table_id AND orders.status != 'paid'
+    WHERE tables.is_active = 1
+    ORDER BY tables.number
+  `).all();
   res.render('tables/index', { tables });
 });
 
@@ -102,10 +111,17 @@ app.post('/tables', requireAuth, (req, res) => {
     db.prepare('INSERT INTO tables (number) VALUES (?)').run(number);
     res.redirect('/tables');
   } catch (error) {
-    res.render('tables/index', { 
-      tables: db.prepare('SELECT * FROM tables WHERE is_active = 1').all(),
-      error: 'El número de mesa ya existe'
-    });
+    const tables = db.prepare(`
+      SELECT 
+        tables.id, 
+        tables.number,
+        CASE WHEN orders.id IS NOT NULL THEN 1 ELSE 0 END as has_active_order
+      FROM tables
+      LEFT JOIN orders ON tables.id = orders.table_id AND orders.status != 'paid'
+      WHERE tables.is_active = 1
+      ORDER BY tables.number
+    `).all();
+    res.render('tables/index', { tables, error: 'El número de mesa ya existe' });
   }
 });
 
