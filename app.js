@@ -29,7 +29,11 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-  res.redirect('/tables');
+  if (req.session.userId) {
+    res.redirect('/tables');
+  } else {
+    res.redirect('/login');
+  }
 });
 
 app.get('/register', (req, res) => {
@@ -87,12 +91,12 @@ app.post('/logout', (req, res) => {
   res.redirect('/login');
 });
 
-app.get('/tables', (req, res) => {
+app.get('/tables', requireAuth, (req, res) => {
   const tables = db.prepare('SELECT * FROM tables WHERE is_active = 1').all();
   res.render('tables/index', { tables });
 });
 
-app.post('/tables', (req, res) => {
+app.post('/tables', requireAuth, (req, res) => {
   const { number } = req.body;
   try {
     db.prepare('INSERT INTO tables (number) VALUES (?)').run(number);
@@ -105,7 +109,7 @@ app.post('/tables', (req, res) => {
   }
 });
 
-app.post('/tables/:id/delete', (req, res) => {
+app.post('/tables/:id/delete', requireAuth, (req, res) => {
   const { id } = req.params;
   db.prepare('UPDATE tables SET is_active = 0 WHERE id = ?').run(id);
   res.redirect('/tables');
