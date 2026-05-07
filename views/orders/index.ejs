@@ -2,12 +2,13 @@
   title: 'Lista de Pedidos',
   body: `
     <div class="page-header">
-      <h2>Pedidos</h2>
+      <h2>Pedidos Activos</h2>
+      <a href="/dashboard" class="btn btn-primary" style="margin-top: 0.5rem;">Ir al Dashboard</a>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <h3>Todos los Pedidos</h3>
+        <h3>Pedidos No Pagados</h3>
       </div>
       <div class="card-body">
         ${orders.length > 0 ? `
@@ -24,11 +25,11 @@
               </thead>
               <tbody>
                 ${orders.map(order => `
-                  <tr>
+                  <tr class="row-${order.status}">
                     <td><strong>#${order.id}</strong></td>
                     <td>Mesa ${order.table_number}</td>
                     <td>${order.username}</td>
-                    <td><span class="badge badge-${order.status}">${order.status}</span></td>
+                    <td><span class="badge badge-${order.status}">${getStatusLabel(order.status)}</span></td>
                     <td>${new Date(order.created_at).toLocaleString('es-ES')}</td>
                   </tr>
                 `).join('')}
@@ -37,10 +38,20 @@
           </div>
         ` : `
           <div class="empty-state">
-            <p>No hay pedidos. <a href="/orders/new">Crear el primer pedido</a></p>
+            <p>No hay pedidos activos. <a href="/orders/new">Crear el primer pedido</a></p>
           </div>
         `}
       </div>
     </div>
   `
 }) %>
+
+<%- function getStatusLabel(status) {
+  const labels = {
+    'pending': 'Pendiente',
+    'in_process': 'En Proceso',
+    'delivered': 'Entregado',
+    'paid': 'Pagado'
+  };
+  return labels[status] || status;
+} %>

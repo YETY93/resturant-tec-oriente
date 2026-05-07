@@ -154,10 +154,54 @@ app.get('/orders', requireAuth, (req, res) => {
     FROM orders
     JOIN tables ON orders.table_id = tables.id
     JOIN users ON orders.user_id = users.id
+    WHERE orders.status != 'paid'
     ORDER BY orders.created_at DESC
   `).all();
   
   res.render('orders/index', { orders });
+});
+
+app.get('/dashboard', requireAuth, (req, res) => {
+  const orders = db.prepare(`
+    SELECT orders.id, orders.status, orders.created_at, tables.number as table_number, users.username
+    FROM orders
+    JOIN tables ON orders.table_id = tables.id
+    JOIN users ON orders.user_id = users.id
+    WHERE orders.status != 'paid'
+    ORDER BY orders.created_at DESC
+  `).all();
+  
+  res.render('dashboard/index', { orders });
+});
+
+app.post('/orders/:id/status', requireAuth, (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  
+  const validStates = ['pending', 'in_process', 'delivered', 'paid'];
+  
+  if (!validStates.includes(status)) {
+    return res.redirect('/dashboard');
+  }
+  
+  const currentOrder = db.prepare('SELECT status FROM orders WHERE id = ?').get(id);
+  
+  if (!currentOrder) {
+    return res.redirect('/dashboard');
+  }
+  
+  const stateFlow = {
+    'pending': ['in_process'],
+    'in_process': ['delivered'],
+    'delivered': ['paid']
+  };
+  
+  if (!stateFlow[currentOrder.status].includes(status)) {
+    return res.redirect('/dashboard');
+  }
+  
+  db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, id);
+  res.redirect('/dashboard');
 });
 
 const PORT = process.env.PORT || 3000;
