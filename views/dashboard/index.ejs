@@ -55,7 +55,7 @@
             <h3>📝 Crear Nuevo Pedido</h3>
           </div>
           <div class="card-body">
-            <form action="/orders" method="POST" id="orderForm">
+            <form action="/orders" method="POST" id="orderForm" onsubmit="return validateOrderLimit()">
               <div class="form-row">
                 <div class="form-group">
                   <label for="table_id">Mesa:</label>
@@ -245,7 +245,7 @@
 
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2024 Restaurante Tec Oriente</p>
+      <p>&copy; <script>document.write(new Date().getFullYear())</script> Restaurante Tec Oriente</p>
     </div>
   </footer>
 
@@ -331,6 +331,87 @@
         input.addEventListener('change', updateTotal);
       });
     });
+  </script>
+
+  <!-- Modal de Upgrade -->
+  <div id="upgradeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-icon">🚀</span>
+        <h3>¿Necesitas más pedidos por mesa?</h3>
+      </div>
+      <div class="modal-body">
+        <p class="modal-message">
+          Has alcanzado el límite de pedidos activos por mesa (2 pedidos).
+        </p>
+        <p class="modal-description">
+          Si deseas agregar más pedidos por mesa y acceder a características avanzadas como:
+        </p>
+        <ul class="modal-features">
+          <li>✓ Pedidos ilimitados por mesa</li>
+          <li>✓ División de cuentas</li>
+          <li>✓ Facturación electrónica</li>
+          <li>✓ Reportes y estadísticas avanzadas</li>
+          <li>✓ Soporte técnico prioritario</li>
+        </ul>
+        <div class="contact-card">
+          <div class="contact-header">Contáctanos</div>
+          <div class="contact-info">
+            <div class="contact-item">
+              <span class="contact-icon">👤</span>
+              <span class="contact-text">Yesid Rangel Orozco</span>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">📱</span>
+              <span class="contact-text">321 123 4567</span>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">💼</span>
+              <span class="contact-text">Desarrollador Full Stack</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal()" class="btn btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ordersByTable = {};
+    <% orders.forEach(function(order) { %>
+      if (!ordersByTable[<%= order.table_number %>]) {
+        ordersByTable[<%= order.table_number %>] = 0;
+      }
+      ordersByTable[<%= order.table_number %>]++;
+    <% }); %>
+    
+    function validateOrderLimit() {
+      const tableSelect = document.getElementById('table_id');
+      const selectedTableNumber = tableSelect.options[tableSelect.selectedIndex].text.replace('Mesa ', '');
+      
+      if (ordersByTable[selectedTableNumber] >= 2) {
+        showModal();
+        return false;
+      }
+      return true;
+    }
+    
+    function showModal() {
+      document.getElementById('upgradeModal').style.display = 'flex';
+    }
+    
+    function closeModal() {
+      document.getElementById('upgradeModal').style.display = 'none';
+    }
+    
+    window.onclick = function(event) {
+      const modal = document.getElementById('upgradeModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
   </script>
 
   <script src="/js/main.js"></script>

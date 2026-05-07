@@ -40,7 +40,7 @@
           <h3>Agregar Nuevo Producto</h3>
         </div>
         <div class="card-body">
-          <form action="/products" method="POST" class="form-inline">
+          <form action="/products" method="POST" class="form-inline" onsubmit="return validateProductLimit()">
             <div class="form-group">
               <label for="name">Nombre del Producto:</label>
               <input type="text" id="name" name="name" required class="form-control" placeholder="Ej: Pizza Margarita">
@@ -58,7 +58,7 @@
 
       <div class="card">
         <div class="card-header">
-          <h3>Lista de Productos</h3>
+          <h3>Lista de Productos (<%= products.length %>)</h3>
         </div>
         <div class="card-body">
           <% if (products.length > 0) { %>
@@ -98,11 +98,83 @@
     </div>
   </main>
 
+  <!-- Modal de Upgrade -->
+  <div id="upgradeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-icon">🚀</span>
+        <h3>¿Necesitas más productos?</h3>
+      </div>
+      <div class="modal-body">
+        <p class="modal-message">
+          Has alcanzado el límite de productos gratuitos (10 productos).
+        </p>
+        <p class="modal-description">
+          Si deseas agregar más productos y acceder a características avanzadas como:
+        </p>
+        <ul class="modal-features">
+          <li>✓ Catálogo de productos ilimitado</li>
+          <li>✓ Categorías y subcategorías</li>
+          <li>✓ Imágenes de productos</li>
+          <li>✓ Reportes y estadísticas avanzadas</li>
+          <li>✓ Soporte técnico prioritario</li>
+        </ul>
+        <div class="contact-card">
+          <div class="contact-header">Contáctanos</div>
+          <div class="contact-info">
+            <div class="contact-item">
+              <span class="contact-icon">👤</span>
+              <span class="contact-text">Yesid Rangel Orozco</span>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">📱</span>
+              <span class="contact-text">321 123 4567</span>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">💼</span>
+              <span class="contact-text">Desarrollador Full Stack</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal()" class="btn btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2024 Restaurante Tec Oriente</p>
+      <p>&copy; <script>document.write(new Date().getFullYear())</script> Restaurante Tec Oriente</p>
     </div>
   </footer>
+
+  <script>
+    const productCount = <%= products.length %>;
+    
+    function validateProductLimit() {
+      if (productCount >= 10) {
+        showModal();
+        return false;
+      }
+      return true;
+    }
+    
+    function showModal() {
+      document.getElementById('upgradeModal').style.display = 'flex';
+    }
+    
+    function closeModal() {
+      document.getElementById('upgradeModal').style.display = 'none';
+    }
+    
+    window.onclick = function(event) {
+      const modal = document.getElementById('upgradeModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+  </script>
 
   <script src="/js/main.js"></script>
 </body>

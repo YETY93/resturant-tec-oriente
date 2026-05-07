@@ -1,60 +1,173 @@
-<%- include('../layout', { 
-  title: 'Gestión de Mesas',
-  body: `
-    <div class="page-header">
-      <h2>Gestión de Mesas</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Mesas - Restaurante</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1 class="logo">🍽️ Restaurante Tec Oriente</h1>
+      <nav class="nav">
+        <% if (locals.user) { %>
+          <a href="/tables" class="nav-link active">Mesas</a>
+          <a href="/products" class="nav-link">Productos</a>
+          <a href="/dashboard" class="nav-link">Pedidos</a>
+          <a href="/orders" class="nav-link">Historial</a>
+          <span class="nav-user">👤 <%= user.username %></span>
+          <form action="/logout" method="POST" class="form-logout">
+            <button type="submit" class="btn btn-logout">Salir</button>
+          </form>
+        <% } else { %>
+          <a href="/login" class="nav-link">Ingresar</a>
+          <a href="/register" class="nav-link">Registrarse</a>
+        <% } %>
+      </nav>
     </div>
+  </header>
 
-    <div class="card">
-      <div class="card-header">
-        <h3>Agregar Nueva Mesa</h3>
+  <main class="main">
+    <div class="container">
+      <div class="page-header">
+        <h2>Gestión de Mesas</h2>
       </div>
-      <div class="card-body">
-        <form action="/tables" method="POST" class="form-inline">
-          <div class="form-group">
-            <label for="number">Número de Mesa:</label>
-            <input type="number" id="number" name="number" min="1" required class="form-control" placeholder="Ej: 1">
-          </div>
-          <button type="submit" class="btn btn-primary">
-            <span class="icon">+</span> Agregar Mesa
-          </button>
-        </form>
-      </div>
-    </div>
 
-    <div class="card">
-      <div class="card-header">
-        <h3>Lista de Mesas Activas</h3>
+      <div class="card">
+        <div class="card-header">
+          <h3>Agregar Nueva Mesa</h3>
+        </div>
+        <div class="card-body">
+          <form action="/tables" method="POST" class="form-inline" onsubmit="return validateTableLimit()">
+            <div class="form-group">
+              <label for="number">Número de Mesa:</label>
+              <input type="number" id="number" name="number" min="1" required class="form-control" placeholder="Ej: 1">
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <span class="icon">+</span> Agregar Mesa
+            </button>
+          </form>
+        </div>
       </div>
-      <div class="card-body">
-        ${tables.length > 0 ? `
-          <div class="tables-grid">
-            ${tables.map(table => `
-              <div class="table-card ${table.has_active_order ? 'table-occupied' : 'table-available'}">
-                <div class="table-icon">
-                  <span class="icon-table">🪑</span>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Lista de Mesas Activas (<%= tables.length %>)</h3>
+        </div>
+        <div class="card-body">
+          <% if (tables.length > 0) { %>
+            <div class="tables-grid">
+              <% tables.forEach(function(table) { %>
+                <div class="table-card <%= table.has_active_order ? 'table-occupied' : 'table-available' %>">
+                  <div class="table-icon">
+                    <span class="icon-table">🪑</span>
+                  </div>
+                  <div class="table-number">Mesa <%= table.number %></div>
+                  <div class="table-status">
+                    <% if (table.has_active_order) { %>
+                      <span class="badge badge-occupied">Ocupada</span>
+                    <% } else { %>
+                      <span class="badge badge-available">Disponible</span>
+                    <% } %>
+                  </div>
+                  <div class="table-actions">
+                    <form action="/tables/<%= table.id %>/delete" method="POST" class="form-delete" onsubmit="return confirm('¿Desactivar mesa <%= table.number %>?)">
+                      <button type="submit" class="btn btn-danger btn-sm">Desactivar</button>
+                    </form>
+                  </div>
                 </div>
-                <div class="table-number">Mesa ${table.number}</div>
-                <div class="table-status">
-                  ${table.has_active_order ? 
-                    '<span class="badge badge-occupied">Ocupada</span>' : 
-                    '<span class="badge badge-available">Disponible</span>'
-                  }
-                </div>
-                <div class="table-actions">
-                  <form action="/tables/${table.id}/delete" method="POST" class="form-delete" onsubmit="return confirm('¿Desactivar mesa ${table.number}?')">
-                    <button type="submit" class="btn btn-danger btn-sm">Desactivar</button>
-                  </form>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        ` : `
-          <div class="empty-state">
-            <p>No hay mesas registradas. Agrega la primera mesa arriba.</p>
-          </div>
-        `}
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <p>No hay mesas registradas. Agrega la primera mesa arriba.</p>
+            </div>
+          <% } %>
+        </div>
       </div>
     </div>
-  `
-}) %>
+  </main>
+
+  <!-- Modal de Upgrade -->
+  <div id="upgradeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-icon">🚀</span>
+        <h3>¿Necesitas más capacidad?</h3>
+      </div>
+      <div class="modal-body">
+        <p class="modal-message">
+          Has alcanzado el límite de mesas gratuitas (6 mesas).
+        </p>
+        <p class="modal-description">
+          Si deseas agregar más mesas y acceder a características avanzadas como:
+        </p>
+        <ul class="modal-features">
+          <li>✓ Mesas ilimitadas</li>
+          <li>✓ Pedidos múltiples por mesa</li>
+          <li>✓ Catálogo de productos extendido</li>
+          <li>✓ Reportes y estadísticas avanzadas</li>
+          <li>✓ Soporte técnico prioritario</li>
+        </ul>
+        <div class="contact-card">
+          <div class="contact-header">Contáctanos</div>
+          <div class="contact-info">
+            <div class="contact-item">
+              <span class="contact-icon">👤</span>
+              <span class="contact-text">Yesid Rangel Orozco</span>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">📱</span>
+              <span class="contact-text">321 123 4567</span>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">💼</span>
+              <span class="contact-text">Desarrollador Full Stack</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal()" class="btn btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; <script>document.write(new Date().getFullYear())</script> Restaurante Tec Oriente</p>
+    </div>
+  </footer>
+
+  <script>
+    const tableCount = <%= tables.length %>;
+    
+    function validateTableLimit() {
+      if (tableCount >= 6) {
+        showModal();
+        return false;
+      }
+      return true;
+    }
+    
+    function showModal() {
+      document.getElementById('upgradeModal').style.display = 'flex';
+    }
+    
+    function closeModal() {
+      document.getElementById('upgradeModal').style.display = 'none';
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('upgradeModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+  </script>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
