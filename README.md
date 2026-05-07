@@ -111,3 +111,62 @@ restaurante/
 - Estadísticas en tiempo real
 - Acciones rápidas por estado
 - Total estimado en creación
+
+## 🚀 Deployment
+
+### ❌ NO usar Vercel
+
+**Esta app NO funciona en Vercel Serverless:**
+- SQLite requiere filesystem persistente (Vercel es ephemeral)
+- Express tradicional no compatible con serverless
+- Sessions no persisten
+
+**Ver [DEPLOYMENT.md](DEPLOYMENT.md) para opciones válidas**
+
+### ✅ Plataformas recomendadas
+
+1. **Railway.app** (Gratis, soporta SQLite)
+   ```bash
+   railway login
+   railway init
+   railway up
+   ```
+
+2. **Render.com** (Gratis, soporta Express)
+   - Build: `npm install`
+   - Start: `npm start`
+
+3. **VPS** (DigitalOcean, Linode)
+   ```bash
+   npm start
+   ```
+
+### 🔧 Local Testing
+
+```bash
+npm install
+npm start
+# http://localhost:3000
+```
+
+## 📞 Contacto Comercial
+
+**Yesid Rangel Orozco**  
+📱 321 123 4567  
+💼 Desarrollador Full Stack
+
+Para ampliaciones del sistema:
+- Mesas ilimitadas
+- Pedidos múltiples por mesa
+- Catálogo extendido
+- Reportes avanzados
+
+## 🎯 Límites MVP (Upgrade disponible)
+
+- **Mesas:** 6 máximo
+- **Pedidos por mesa:** 2 máximo
+- **Productos:** 10 máximo
+
+## 📄 License
+
+MIT License - 2024
