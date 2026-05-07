@@ -606,3 +606,24 @@ body {
 .row-delivered {
   background-color: #f0fdf4;
 }
+
+.row-paid {
+  background-color: var(--gray-50);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.filter-group .form-control {
+  width: auto;
+  min-width: 150px;
+}

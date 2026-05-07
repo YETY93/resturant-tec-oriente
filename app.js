@@ -149,16 +149,34 @@ app.post('/orders', requireAuth, (req, res) => {
 });
 
 app.get('/orders', requireAuth, (req, res) => {
-  const orders = db.prepare(`
-    SELECT orders.id, orders.status, orders.created_at, tables.number as table_number, users.username
-    FROM orders
-    JOIN tables ON orders.table_id = tables.id
-    JOIN users ON orders.user_id = users.id
-    WHERE orders.status != 'paid'
-    ORDER BY orders.created_at DESC
-  `).all();
+  const validFilters = ['pending', 'in_process', 'delivered', 'paid', 'all'];
+  let filter = req.query.status || 'pending';
   
-  res.render('orders/index', { orders });
+  if (!validFilters.includes(filter)) {
+    filter = 'pending';
+  }
+  
+  let orders;
+  if (filter === 'all') {
+    orders = db.prepare(`
+      SELECT orders.id, orders.status, orders.created_at, tables.number as table_number, users.username
+      FROM orders
+      JOIN tables ON orders.table_id = tables.id
+      JOIN users ON orders.user_id = users.id
+      ORDER BY orders.created_at DESC
+    `).all();
+  } else {
+    orders = db.prepare(`
+      SELECT orders.id, orders.status, orders.created_at, tables.number as table_number, users.username
+      FROM orders
+      JOIN tables ON orders.table_id = tables.id
+      JOIN users ON orders.user_id = users.id
+      WHERE orders.status = ?
+      ORDER BY orders.created_at DESC
+    `).all(filter);
+  }
+  
+  res.render('orders/index', { orders, filter });
 });
 
 app.get('/dashboard', requireAuth, (req, res) => {

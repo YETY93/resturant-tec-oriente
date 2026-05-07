@@ -37,13 +37,24 @@
       <% } %>
       
       <div class="page-header">
-        <h2>Pedidos Activos</h2>
-        <a href="/dashboard" class="btn btn-primary" style="margin-top: 0.5rem;">Ir al Dashboard</a>
+        <h2>Historial de Pedidos</h2>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <h3>Pedidos No Pagados</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <h3>Pedidos</h3>
+            <div class="filter-group">
+              <label for="filter">Filtrar por estado:</label>
+              <select id="filter" class="form-control" onchange="window.location.href='/orders?status=' + this.value">
+                <option value="pending" <%= filter === 'pending' ? 'selected' : '' %>>Pendientes</option>
+                <option value="in_process" <%= filter === 'in_process' ? 'selected' : '' %>>En Proceso</option>
+                <option value="delivered" <%= filter === 'delivered' ? 'selected' : '' %>>Entregados</option>
+                <option value="paid" <%= filter === 'paid' ? 'selected' : '' %>>Pagados</option>
+                <option value="all" <%= filter === 'all' ? 'selected' : '' %>>Todos</option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="card-body">
           <% if (orders.length > 0) { %>
@@ -80,7 +91,7 @@
             </div>
           <% } else { %>
             <div class="empty-state">
-              <p>No hay pedidos activos. <a href="/orders/new">Crear el primer pedido</a></p>
+              <p>No hay pedidos con ese filtro. <a href="/orders/new">Crear un nuevo pedido</a></p>
             </div>
           <% } %>
         </div>
