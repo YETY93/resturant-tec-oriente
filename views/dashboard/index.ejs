@@ -47,101 +47,131 @@
         <p class="page-subtitle">Crea pedidos con productos y gestiona estados en tiempo real</p>
       </div>
 
-      <div class="card panel-create-full">
-        <div class="card-header">
-          <h3>📝 Crear Nuevo Pedido</h3>
-        </div>
-        <div class="card-body">
-          <form action="/orders" method="POST" id="orderForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="table_id">Mesa:</label>
-                <select id="table_id" name="table_id" required class="form-control">
-                  <option value="">-- Seleccionar Mesa --</option>
-                  <% tables.forEach(function(table) { %>
-                    <option value="<%= table.id %>">Mesa <%= table.number %></option>
-                  <% }); %>
-                </select>
-              </div>
-            </div>
-
-            <div class="products-section">
-              <h4>Productos del Pedido</h4>
-              <div id="productsList">
-                <!-- Primer producto por defecto -->
-                <div class="product-item" data-index="0">
-                  <div class="product-row">
-                    <div class="form-group">
-                      <label>Producto:</label>
-                      <select name="products[0][product_id]" required class="form-control product-select">
-                        <option value="">-- Seleccionar --</option>
-                        <% products.forEach(function(product) { %>
-                          <option value="<%= product.id %>" data-price="<%= product.price %>">
-                            <%= product.name %> - $ <%= product.price.toFixed(2) %>
-                          </option>
-                        <% }); %>
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label>Cantidad:</label>
-                      <input type="number" name="products[0][quantity]" min="1" value="1" required class="form-control quantity-input">
-                    </div>
-                    <button type="button" class="btn btn-danger btn-remove" onclick="removeProduct(0)" style="display: none;">
-                      ✕
-                    </button>
-                  </div>
+      <!-- Layout superior: Crear pedido + Estadísticas -->
+      <div class="dashboard-top-layout">
+        <!-- Panel de Creación de Pedido -->
+        <div class="card panel-create-full">
+          <div class="card-header">
+            <h3>📝 Crear Nuevo Pedido</h3>
+          </div>
+          <div class="card-body">
+            <form action="/orders" method="POST" id="orderForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="table_id">Mesa:</label>
+                  <select id="table_id" name="table_id" required class="form-control">
+                    <option value="">-- Seleccionar Mesa --</option>
+                    <% tables.forEach(function(table) { %>
+                      <option value="<%= table.id %>">Mesa <%= table.number %></option>
+                    <% }); %>
+                  </select>
                 </div>
               </div>
-              
-              <button type="button" class="btn btn-secondary" onclick="addProduct()">
-                + Agregar otro producto
-              </button>
-              
-              <div class="total-preview">
-                <strong>Total estimado:</strong>
-                <span id="totalAmount">$ 0.00</span>
+
+              <div class="products-section">
+                <h4>Productos del Pedido</h4>
+                <div id="productsList">
+                  <!-- Primer producto por defecto -->
+                  <div class="product-item" data-index="0">
+                    <div class="product-row">
+                      <div class="form-group">
+                        <label>Producto:</label>
+                        <select name="products[0][product_id]" required class="form-control product-select">
+                          <option value="">-- Seleccionar --</option>
+                          <% products.forEach(function(product) { %>
+                            <option value="<%= product.id %>" data-price="<%= product.price %>">
+                              <%= product.name %> - $ <%= product.price.toFixed(2) %>
+                            </option>
+                          <% }); %>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>Cantidad:</label>
+                        <input type="number" name="products[0][quantity]" min="1" value="1" required class="form-control quantity-input">
+                      </div>
+                      <button type="button" class="btn btn-danger btn-remove" onclick="removeProduct(0)" style="display: none;">
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <button type="button" class="btn btn-secondary" onclick="addProduct()">
+                  + Agregar otro producto
+                </button>
+                
+                <div class="total-preview">
+                  <strong>Total estimado:</strong>
+                  <span id="totalAmount">$ 0.00</span>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  ✓ Crear Pedido
+                </button>
+              </div>
+            </form>
+            
+            <% if (tables.length === 0) { %>
+              <div class="alert alert-warning" style="margin-top: 1rem;">
+                No hay mesas disponibles. <a href="/tables">Agregar mesas</a>
+              </div>
+            <% } %>
+            
+            <% if (products.length === 0) { %>
+              <div class="alert alert-warning" style="margin-top: 1rem;">
+                No hay productos disponibles. <a href="/products">Agregar productos</a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Panel de Estadísticas (derecha) -->
+        <div class="stats-panel">
+          <div class="stats-header">
+            <h3>📊 Resumen</h3>
+          </div>
+          <div class="stats-cards">
+            <div class="stat-card stat-pending">
+              <div class="stat-icon">⏳</div>
+              <div class="stat-content">
+                <div class="stat-number">
+                  <%= orders.filter(o => o.status === 'pending').length %>
+                </div>
+                <div class="stat-label">Pendientes</div>
               </div>
             </div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary btn-lg">
-                ✓ Crear Pedido
-              </button>
+            
+            <div class="stat-card stat-in_process">
+              <div class="stat-icon">👨‍🍳</div>
+              <div class="stat-content">
+                <div class="stat-number">
+                  <%= orders.filter(o => o.status === 'in_process').length %>
+                </div>
+                <div class="stat-label">En Proceso</div>
+              </div>
             </div>
-          </form>
+            
+            <div class="stat-card stat-delivered">
+              <div class="stat-icon">✅</div>
+              <div class="stat-content">
+                <div class="stat-number">
+                  <%= orders.filter(o => o.status === 'delivered').length %>
+                </div>
+                <div class="stat-label">Entregados</div>
+              </div>
+            </div>
+          </div>
           
-          <% if (tables.length === 0) { %>
-            <div class="alert alert-warning" style="margin-top: 1rem;">
-              No hay mesas disponibles. <a href="/tables">Agregar mesas</a>
+          <div class="stats-total">
+            <div class="total-label">Total Activos</div>
+            <div class="total-number">
+              <%= orders.filter(o => o.status !== 'paid').length %>
             </div>
-          <% } %>
-          
-          <% if (products.length === 0) { %>
-            <div class="alert alert-warning" style="margin-top: 1rem;">
-              No hay productos disponibles. <a href="/products">Agregar productos</a>
-            </div>
-          <% } %>
+          </div>
         </div>
       </div>
-
-      <!-- Estadísticas -->
-      <div class="stats-grid-main">
-        <div class="stat-box stat-pending">
-          <div class="stat-number">
-            <%= orders.filter(o => o.status === 'pending').length %>
-          </div>
-          <div class="stat-label">⏳ Pendientes</div>
-        </div>
-        <div class="stat-box stat-in_process">
-          <div class="stat-number">
-            <%= orders.filter(o => o.status === 'in_process').length %>
-          </div>
-          <div class="stat-label">👨‍🍳 En Proceso</div>
-        </div>
-        <div class="stat-box stat-delivered">
-          <div class="stat-number">
-            <%= orders.filter(o => o.status === 'delivered').length %>
-          </div>
           <div class="stat-label">✅ Entregados</div>
         </div>
       </div>
