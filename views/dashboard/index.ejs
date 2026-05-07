@@ -1,61 +1,109 @@
-<%- include('../layout', { 
-  title: 'Dashboard - Pedidos Activos',
-  body: `
-    <div class="page-header">
-      <h2>Dashboard de Pedidos</h2>
-      <p class="page-subtitle">Gestiona el estado de los pedidos activos</p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Pedidos Activos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1 class="logo">🍽️ Restaurante Tec Oriente</h1>
+      <nav class="nav">
+        <% if (locals.user) { %>
+          <a href="/tables" class="nav-link">Mesas</a>
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <a href="/orders/new" class="nav-link">Nuevo Pedido</a>
+          <a href="/orders" class="nav-link">Pedidos</a>
+          <span class="nav-user">👤 <%= user.username %></span>
+          <form action="/logout" method="POST" class="form-logout">
+            <button type="submit" class="btn btn-logout">Salir</button>
+          </form>
+        <% } else { %>
+          <a href="/login" class="nav-link">Ingresar</a>
+          <a href="/register" class="nav-link">Registrarse</a>
+        <% } %>
+      </nav>
     </div>
+  </header>
 
-    ${orders.length > 0 ? `
-      <div class="orders-dashboard">
-        ${orders.map(order => `
-          <div class="order-card order-${order.status}">
-            <div class="order-header">
-              <div class="order-info">
-                <span class="order-id">#${order.id}</span>
-                <span class="order-table">Mesa ${order.table_number}</span>
-              </div>
-              <span class="badge badge-${order.status}">${getStatusLabel(order.status)}</span>
-            </div>
-            
-            <div class="order-details">
-              <p><strong>Camarero:</strong> ${order.username}</p>
-              <p><strong>Fecha:</strong> ${new Date(order.created_at).toLocaleString('es-ES')}</p>
-            </div>
-            
-            <div class="order-actions">
-              ${getNextAction(order.status)}
-            </div>
-          </div>
-        `).join('')}
+  <main class="main">
+    <div class="container">
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-error">
+          <%= error %>
+        </div>
+      <% } %>
+      
+      <div class="page-header">
+        <h2>Dashboard de Pedidos</h2>
+        <p class="page-subtitle">Gestiona el estado de los pedidos activos</p>
       </div>
-    ` : `
-      <div class="card">
-        <div class="card-body">
-          <div class="empty-state">
-            <p>No hay pedidos activos. <a href="/orders/new">Crear un nuevo pedido</a></p>
+
+      <% if (orders.length > 0) { %>
+        <div class="orders-dashboard">
+          <% orders.forEach(function(order) { %>
+            <div class="order-card order-<%= order.status %>">
+              <div class="order-header">
+                <div class="order-info">
+                  <span class="order-id">#<%= order.id %></span>
+                  <span class="order-table">Mesa <%= order.table_number %></span>
+                </div>
+                <span class="badge badge-<%= order.status %>">
+                  <% if (order.status === 'pending') { %>Pendiente<% } %>
+                  <% if (order.status === 'in_process') { %>En Proceso<% } %>
+                  <% if (order.status === 'delivered') { %>Entregado<% } %>
+                  <% if (order.status === 'paid') { %>Pagado<% } %>
+                </span>
+              </div>
+              
+              <div class="order-details">
+                <p><strong>Camarero:</strong> <%= order.username %></p>
+                <p><strong>Fecha:</strong> <%= new Date(order.created_at).toLocaleString('es-ES') %></p>
+              </div>
+              
+              <div class="order-actions">
+                <% if (order.status === 'pending') { %>
+                  <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
+                    <input type="hidden" name="status" value="in_process">
+                    <button type="submit" class="btn btn-process btn-block">▶ Iniciar Preparación</button>
+                  </form>
+                <% } %>
+                <% if (order.status === 'in_process') { %>
+                  <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
+                    <input type="hidden" name="status" value="delivered">
+                    <button type="submit" class="btn btn-deliver btn-block">✓ Marcar Entregado</button>
+                  </form>
+                <% } %>
+                <% if (order.status === 'delivered') { %>
+                  <form action="/orders/<%= order.id %>/status" method="POST" class="status-form">
+                    <input type="hidden" name="status" value="paid">
+                    <button type="submit" class="btn btn-pay btn-block">$ Marcar Pagado</button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="card">
+          <div class="card-body">
+            <div class="empty-state">
+              <p>No hay pedidos activos. <a href="/orders/new">Crear un nuevo pedido</a></p>
+            </div>
           </div>
         </div>
-      </div>
-    `}
-  `
-}) %>
+      <% } %>
+    </div>
+  </main>
 
-<%- function getStatusLabel(status) {
-  const labels = {
-    'pending': 'Pendiente',
-    'in_process': 'En Proceso',
-    'delivered': 'Entregado',
-    'paid': 'Pagado'
-  };
-  return labels[status] || status;
-} %>
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2024 Restaurante Tec Oriente</p>
+    </div>
+  </footer>
 
-<%- function getNextAction(status) {
-  const actions = {
-    'pending': '<form action="/orders/${order.id}/status" method="POST" class="status-form"><input type="hidden" name="status" value="in_process"><button type="submit" class="btn btn-process btn-block">▶ Iniciar Preparación</button></form>',
-    'in_process': '<form action="/orders/${order.id}/status" method="POST" class="status-form"><input type="hidden" name="status" value="delivered"><button type="submit" class="btn btn-deliver btn-block">✓ Marcar Entregado</button></form>',
-    'delivered': '<form action="/orders/${order.id}/status" method="POST" class="status-form"><input type="hidden" name="status" value="paid"><button type="submit" class="btn btn-pay btn-block">$ Marcar Pagado</button></form>'
-  };
-  return actions[status] || '';
-} %>
+  <script src="/js/main.js"></script>
+</body>
+</html>
